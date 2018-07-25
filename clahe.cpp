@@ -22,7 +22,35 @@
 #include "/usr/local/include/opencv2/highgui/highgui.hpp"
 #include<iostream>
 #include<omp.h>
+#include<dirent.h>
+#include <sys/stat.h>
 //#include<chrono>
+
+/*!
+ * @brief Checks existence of the specified directory
+ * @param sPath - directory path name
+ * @return true if directory exists, false otherwise
+ */
+bool DirExists(const char *sPath)
+{
+    struct stat info;
+    
+    if (stat( sPath, &info ) != 0)
+    {
+        return false;
+    }
+    
+    // This will be true for local disks
+    // but will fail for remote directories.
+    if (info.st_mode & S_IFDIR)
+    {
+        return true;
+    }
+    
+    return false;
+}
+
+
 
 //using namespace std::chrono;
 /*
@@ -90,12 +118,32 @@ int main(int argc, char* argv[])
     printf("output images directory: %s\n", argv[2]);
     
         
+    //Checking if the input directory exists or not and returning -1 if it doesn't exits
+    string input_dir=argv[1];
+    string full_input_directory="./" + input_dir;
+    if (!DirExists(full_input_directory.c_str()))
+        {
+        printf("The mentioned input directory doesnot exists!\n");
+        return -1;
+        }
+    
+    //Checking if the output directory exists and creating it if not.
+    string output_dir=argv[2];
+    string full_out_directory="./" + output_dir;
+    if (!DirExists(full_out_directory.c_str()))
+        {
+        printf("The mentioned output directory doesnot exists!\n");
+        mkdir(full_out_directory.c_str(),S_IRWXU);
+        }
+        
     // Parsing the input images directory form the argument and obtaining all the list of images found in that directory
     std::ostringstream input;
-    input<<"./"<<argv[1]<<"/*.tif";
+    input<<"./"<<argv[1]<<"/*.*";
+    
     vector<cv::String> filenames;
     cv::glob (input.str(),filenames);
     
+    //Obtaining the number of threads from the user.
     int threads=atoi(argv[5]);
     omp_set_num_threads(threads);
     

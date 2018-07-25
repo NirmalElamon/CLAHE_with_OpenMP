@@ -1,3 +1,5 @@
 *.o
 clahe
 .DS_Store
+images
+output
